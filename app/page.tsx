@@ -1,20 +1,15 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { type Sale, getSales, saveSale, updateSale, deleteSale, getSalesByCustomer } from "@/lib/storage"
+import { type Sale, getSales, saveSale, updateSale, deleteSale } from "@/lib/storage"
 import { SaleForm } from "@/components/sale-form"
-import { SalesTable } from "@/components/sales-table"
-import { CustomerHistory } from "@/components/customer-history"
+import { CustomerCards } from "@/components/customer-cards"
 import { Button } from "@/components/ui/button"
 import { Plus, Package } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
-type View = "list" | "customer"
-
 export default function Home() {
   const [sales, setSales] = useState<Sale[]>([])
-  const [view, setView] = useState<View>("list")
-  const [selectedCustomer, setSelectedCustomer] = useState<string>("")
   const [showForm, setShowForm] = useState(false)
   const [editingSale, setEditingSale] = useState<Sale | null>(null)
 
@@ -45,15 +40,12 @@ export default function Home() {
     }
   }
 
-  const handleViewCustomer = (customerName: string) => {
-    setSelectedCustomer(customerName)
-    setView("customer")
-  }
-
   const handleCloseForm = () => {
     setShowForm(false)
     setEditingSale(null)
   }
+
+  const uniqueCustomers = new Set(sales.map((sale) => sale.customerName)).size
 
   return (
     <div className="min-h-screen bg-background">
@@ -69,31 +61,27 @@ export default function Home() {
                 <p className="text-sm text-muted-foreground">Sistema de gestión de ventas</p>
               </div>
             </div>
-            {view === "list" && (
-              <Button onClick={() => setShowForm(true)} size="lg">
-                <Plus className="h-5 w-5 mr-2" />
-                Nueva Venta
-              </Button>
-            )}
+            <Button onClick={() => setShowForm(true)} size="lg">
+              <Plus className="h-5 w-5 mr-2" />
+              Nueva Venta
+            </Button>
           </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        {view === "list" ? (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Todas las Ventas ({sales.length})</h2>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Clientes y Ventas</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                {uniqueCustomers} {uniqueCustomers === 1 ? "cliente" : "clientes"} · {sales.length}{" "}
+                {sales.length === 1 ? "venta" : "ventas"}
+              </p>
             </div>
-            <SalesTable sales={sales} onEdit={handleEdit} onDelete={handleDelete} onViewCustomer={handleViewCustomer} />
           </div>
-        ) : (
-          <CustomerHistory
-            customerName={selectedCustomer}
-            sales={getSalesByCustomer(selectedCustomer)}
-            onBack={() => setView("list")}
-          />
-        )}
+          <CustomerCards sales={sales} onEdit={handleEdit} onDelete={handleDelete} />
+        </div>
       </main>
 
       <Dialog open={showForm} onOpenChange={handleCloseForm}>
